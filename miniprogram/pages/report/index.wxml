@@ -1,0 +1,383 @@
+<view class="shell report-page">
+  <view class="bg-layer">
+    <view class="bg-orb sky"></view>
+    <view class="bg-orb blue"></view>
+    <view class="bg-orb emerald"></view>
+  </view>
+
+  <scroll-view scroll-y class="page-scroll">
+    <view class="page-inner">
+      <view class="top-actions">
+        <view class="status-pill {{isCompleted ? 'emerald' : isErrorState ? 'rose' : 'sky'}}">
+          {{statusLabel}}
+        </view>
+        <button class="secondary-button top-button" bindtap="openHome">重新分析</button>
+      </view>
+
+      <view class="glass-card hero-card">
+        <view wx:if="{{!isCompleted && !isErrorState}}">
+          <view class="eyebrow">Processing</view>
+          <view class="hero-title">正在生成动作报告</view>
+          <view class="hero-subtitle">{{statusDescription}}</view>
+
+          <view class="progress-ring">
+            <view class="progress-ring-core">
+              <view class="progress-ring-value">{{progress}}%</view>
+              <view class="progress-ring-label">进度</view>
+            </view>
+          </view>
+
+          <view class="progress-track">
+            <view class="progress-fill" style="width: {{progress}}%;"></view>
+          </view>
+          <view class="progress-message">{{message}}</view>
+        </view>
+
+        <view wx:elif="{{isErrorState}}">
+          <view class="eyebrow">Unavailable</view>
+          <view class="hero-title">这次分析没有成功完成</view>
+          <view class="hero-subtitle">{{statusDescription}}</view>
+          <view class="error-box">{{errorMessage || message}}</view>
+          <view class="error-actions">
+            <button class="primary-button" bindtap="retryLoad">重新获取</button>
+          </view>
+        </view>
+
+        <view wx:else>
+          <view class="hero-top">
+            <view>
+              <view class="eyebrow">AI Result</view>
+              <view class="hero-title completed">{{summaryCard.actionType}}</view>
+            </view>
+            <view class="score-badge {{summaryCard.scoreTone}}">{{summaryCard.scoreText}} 分</view>
+          </view>
+
+          <view class="hero-subtitle">{{summaryCard.summary}}</view>
+
+          <view class="hero-stats">
+            <view class="hero-stat">
+              <view class="hero-stat-label">模型置信</view>
+              <view class="hero-stat-value">{{summaryCard.confidenceText}}</view>
+            </view>
+            <view class="hero-stat">
+              <view class="hero-stat-label">骨架质量</view>
+              <view class="hero-stat-value">{{summaryCard.poseQualityText}}</view>
+            </view>
+            <view class="hero-stat">
+              <view class="hero-stat-label">问题数量</view>
+              <view class="hero-stat-value">{{summaryCard.issueCountText}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <block wx:if="{{isCompleted}}">
+        <view class="anomaly-card" wx:if="{{anomalyAlerts.length}}">
+          <view class="anomaly-head">
+            <view class="anomaly-icon-wrap">⚠</view>
+            <view class="anomaly-head-text">
+              <view class="anomaly-title">异常事件提醒</view>
+              <view class="anomaly-subtitle">以下时段检测到摔倒或严重失稳，点击可跳转视频</view>
+            </view>
+          </view>
+          <view
+            class="anomaly-item {{item.tone}}"
+            wx:for="{{anomalyAlerts}}"
+            wx:key="id"
+            data-seconds="{{item.seconds}}"
+            bindtap="seekToMoment"
+          >
+            <view class="anomaly-item-left">
+              <view class="anomaly-dot {{item.tone}}"></view>
+            </view>
+            <view class="anomaly-item-body">
+              <view class="anomaly-item-row">
+                <view class="anomaly-name">{{item.name}}</view>
+                <view class="anomaly-tag {{item.tone}}">{{item.tag}}</view>
+                <view class="anomaly-conf" wx:if="{{item.confidenceText}}">置信 {{item.confidenceText}}</view>
+              </view>
+              <view class="anomaly-time">{{item.timeText}}</view>
+              <view class="anomaly-desc">{{item.description}}</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="glass-card stage-card">
+          <view class="section-head">
+            <view>
+              <view class="eyebrow">Playback</view>
+              <view class="section-title">视频复盘主视图</view>
+              <view class="section-subtitle">
+                视频、逐帧指标和 3D 骨骼已打通，播放时会一起更新。
+              </view>
+            </view>
+            <view class="status-pill {{videoPlaying ? 'emerald' : 'sky'}}">
+              {{videoPlaying ? '播放联动中' : '暂停查看'}}
+            </view>
+          </view>
+
+          <view class="video-shell">
+            <video
+              id="analysisVideo"
+              class="analysis-video"
+              src="{{videoUrl}}"
+              controls
+              object-fit="contain"
+              enable-play-gesture
+              show-center-play-btn
+              bindloadedmetadata="handleVideoLoaded"
+              bindplay="handleVideoPlay"
+              bindpause="handleVideoPause"
+              bindended="handleVideoEnded"
+              bindtimeupdate="handleVideoTimeUpdate"
+            ></video>
+          </view>
+
+          <view class="playback-meta">
+            <view class="playback-meta-main">
+              <view class="playback-action">{{actionText}}</view>
+              <view class="playback-note">{{frameNote}}</view>
+            </view>
+            <view class="playback-pill-row">
+              <view class="playback-pill">{{directionText}}</view>
+              <view class="playback-pill">{{currentTimeText}}</view>
+              <view class="playback-pill">{{frameText}}</view>
+            </view>
+          </view>
+
+          <view class="live-hero-grid">
+            <view class="live-hero-card" wx:for="{{liveHeroCards}}" wx:key="key">
+              <view class="live-hero-head">
+                <view class="live-hero-label">{{item.label}}</view>
+                <view class="live-hero-value {{item.tone}}">{{item.valueText}}</view>
+              </view>
+              <view class="live-hero-hint">{{item.hint}}</view>
+              <view class="live-hero-track">
+                <view class="live-hero-fill {{item.tone}}" style="width: {{item.progress}}%;"></view>
+              </view>
+            </view>
+          </view>
+
+          <view class="flag-row">
+            <view class="flag-chip {{item.tone}}" wx:for="{{liveFlags}}" wx:key="label">
+              {{item.label}}
+            </view>
+          </view>
+
+          <view class="event-spotlight {{currentEvent.tone}}" wx:if="{{currentEvent}}">
+            <view class="event-spotlight-time">{{currentEvent.timeText}}</view>
+            <view class="event-spotlight-title">{{currentEvent.title}}</view>
+            <view class="event-spotlight-desc">{{currentEvent.description}}</view>
+          </view>
+
+          <view class="realtime-board">
+            <view class="realtime-board-head">
+              <view class="realtime-board-title">实时数据</view>
+              <view class="realtime-board-subtitle">
+                当前帧的动作、角度、稳定度和问题信息
+              </view>
+            </view>
+
+            <view class="realtime-row" wx:for="{{liveRows}}" wx:key="label">
+              <view class="realtime-row-label">{{item.label}}</view>
+              <view class="realtime-row-value">{{item.value}}</view>
+            </view>
+          </view>
+
+          <view class="moment-row">
+            <view
+              class="moment-chip {{item.tone}}"
+              wx:for="{{keyMoments}}"
+              wx:key="key"
+              wx:if="{{item.available}}"
+              data-seconds="{{item.seconds}}"
+              bindtap="seekToMoment"
+            >
+              <view class="moment-label">{{item.label}}</view>
+              <view class="moment-time">{{item.timeText}}</view>
+            </view>
+          </view>
+
+          <button
+            class="download-btn {{isDownloading ? 'downloading' : ''}}"
+            bindtap="downloadVideo"
+            disabled="{{isDownloading}}"
+          >{{isDownloading ? '下载中…' : '⬇ 下载带骨骼线视频'}}</button>
+        </view>
+
+        <view class="glass-card section-card">
+          <view class="section-head">
+            <view>
+              <view class="eyebrow">Metrics</view>
+              <view class="section-title">四维评分卡</view>
+            </view>
+          </view>
+
+          <view class="metric-grid">
+            <view class="metric-card" wx:for="{{metricCards}}" wx:key="key">
+              <view class="metric-head">
+                <view class="metric-title">{{item.label}}</view>
+                <view class="metric-value {{item.tone}}">{{item.valueText}}</view>
+              </view>
+              <view class="metric-hint">{{item.hint}}</view>
+              <view class="metric-track">
+                <view class="metric-fill {{item.tone}}" style="width: {{item.progress}}%;"></view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="glass-card section-card">
+          <view class="section-head">
+            <view>
+              <view class="eyebrow">Insights</view>
+              <view class="section-title">AI 结论</view>
+            </view>
+          </view>
+
+          <view class="pill-row">
+            <view class="insight-pill" wx:for="{{insightPills}}" wx:key="label">
+              <view class="insight-label">{{item.label}}</view>
+              <view class="insight-value">{{item.value}}</view>
+            </view>
+          </view>
+
+          <view class="ai-section" wx:for="{{aiSections}}" wx:for-item="section" wx:key="key">
+            <view class="ai-section-head">
+              <view class="ai-badge {{section.tone}}">{{section.badge}}</view>
+              <view class="ai-title">{{section.title}}</view>
+            </view>
+
+            <view
+              class="ai-bullet"
+              wx:for="{{section.items}}"
+              wx:for-item="bullet"
+              wx:key="*this"
+            >
+              <view class="ai-bullet-dot"></view>
+              <view class="ai-bullet-text">{{bullet}}</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="glass-card section-card">
+          <view class="section-head">
+            <view>
+              <view class="eyebrow">Timeline</view>
+              <view class="section-title">时间线复盘</view>
+              <view class="section-subtitle">
+                按时间排序的阶段、问题和亮点节点。
+              </view>
+            </view>
+          </view>
+
+          <view class="timeline-list">
+            <view
+              class="timeline-item {{item.tone}}"
+              wx:for="{{timelineItems}}"
+              wx:key="id"
+              data-seconds="{{item.seconds}}"
+              bindtap="seekToMoment"
+            >
+              <view class="timeline-left">
+                <view class="timeline-time">{{item.timeText}}</view>
+                <view class="timeline-badge">{{item.badge}}</view>
+              </view>
+              <view class="timeline-right">
+                <view class="timeline-title">{{item.title}}</view>
+                <view class="timeline-description">{{item.description}}</view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="glass-card section-card" wx:if="{{seriesCards.length}}">
+          <view class="section-head">
+            <view>
+              <view class="eyebrow">Trends</view>
+              <view class="section-title">关键趋势曲线</view>
+            </view>
+          </view>
+
+          <view class="trend-grid">
+            <view class="trend-card" wx:for="{{seriesCards}}" wx:key="key">
+              <view class="trend-top">
+                <view class="trend-title">{{item.label}}</view>
+                <view class="trend-current">{{item.currentText}}</view>
+              </view>
+              <view class="trend-hint">{{item.hint}}</view>
+
+              <view class="sparkline">
+                <view
+                  class="spark-zero"
+                  wx:if="{{item.zeroLine !== null}}"
+                  style="bottom: {{item.zeroLine}}%;"
+                ></view>
+                <view
+                  class="spark-point {{point.active ? 'active' : ''}}"
+                  wx:for="{{item.points}}"
+                  wx:for-item="point"
+                  wx:key="key"
+                  style="left: {{point.left}}%; bottom: {{point.bottom}}%; background: {{item.accent}}; color: {{item.accent}};"
+                ></view>
+              </view>
+
+              <view class="trend-meta">
+                <view>Min {{item.minText}}</view>
+                <view>Max {{item.maxText}}</view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="glass-card section-card">
+          <view class="section-head">
+            <view>
+              <view class="eyebrow">Pose Twin</view>
+              <view class="section-title">3D 骨骼联动视图</view>
+              <view class="section-subtitle">
+                加入了透视地面、深度层次和历史拖影，并与视频时间轴同步。
+              </view>
+            </view>
+            <view class="status-pill {{poseAvailable ? 'emerald' : 'amber'}}">
+              {{poseAvailable ? '跟随视频' : '暂无数据'}}
+            </view>
+          </view>
+
+          <view class="pose-canvas-wrap">
+            <canvas class="pose-canvas" canvas-id="poseCanvas" width="660" height="440"></canvas>
+            <view class="pose-empty-overlay" wx:if="{{!poseAvailable}}">{{poseTip}}</view>
+          </view>
+
+          <view class="pose-meta">
+            <view class="pose-meta-item">当前时刻 {{poseCurrentLabel}}</view>
+            <view class="pose-meta-item">骨骼总帧数 {{poseFrameCount}}</view>
+          </view>
+
+          <view class="pose-stat-row">
+            <view class="pose-stat-card" wx:for="{{poseStats}}" wx:key="label">
+              <view class="pose-stat-label">{{item.label}}</view>
+              <view class="pose-stat-value">{{item.value}}</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="glass-card section-card">
+          <view class="section-head">
+            <view>
+              <view class="eyebrow">Meta</view>
+              <view class="section-title">输入与素材信息</view>
+            </view>
+          </view>
+
+          <view class="meta-grid">
+            <view class="meta-card" wx:for="{{metadataItems}}" wx:key="label">
+              <view class="meta-label">{{item.label}}</view>
+              <view class="meta-value">{{item.value}}</view>
+            </view>
+          </view>
+        </view>
+      </block>
+    </view>
+  </scroll-view>
+</view>

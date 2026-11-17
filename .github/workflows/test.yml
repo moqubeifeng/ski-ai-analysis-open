@@ -1,0 +1,16 @@
+name: Public toolkit tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  miniprogram-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run client tests
+        run: node --test miniprogram/tests/analysis.test.js miniprogram/tests/report-state.test.js miniprogram/tests/request.test.js

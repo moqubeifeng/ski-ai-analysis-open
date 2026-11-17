@@ -1,0 +1,13 @@
+{
+  "desc": "ski analysis mini program sitemap",
+  "rules": [
+    {
+      "action": "disallow",
+      "page": "pages/report/index"
+    },
+    {
+      "action": "allow",
+      "page": "*"
+    }
+  ]
+}

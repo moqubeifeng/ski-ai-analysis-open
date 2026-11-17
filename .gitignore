@@ -1,0 +1,12 @@
+node_modules/
+project.private.config.json
+.env
+.env.*
+*.log
+uploads/
+results/
+temp/
+tmp/
+.DS_Store
+Thumbs.db
+desktop.ini

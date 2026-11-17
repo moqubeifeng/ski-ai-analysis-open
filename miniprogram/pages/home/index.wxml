@@ -1,0 +1,204 @@
+<view class="shell home-page">
+  <view class="bg-layer">
+    <view class="bg-orb sky"></view>
+    <view class="bg-orb blue"></view>
+    <view class="bg-orb emerald"></view>
+  </view>
+
+  <scroll-view scroll-y class="page-scroll">
+    <view class="page-inner">
+      <view class="glass-card hero-card">
+        <view class="eyebrow">AI Ski Motion Lab</view>
+        <view class="hero-title">雪道智析</view>
+        <view class="hero-subtitle">
+          把训练视频直接变成一份可回放、可定位、可执行的滑雪动作报告。
+        </view>
+
+        <view class="hero-metrics">
+          <view class="hero-metric" wx:for="{{heroMetrics}}" wx:key="label">
+            <view class="hero-metric-value">{{item.value}}</view>
+            <view class="hero-metric-label">{{item.label}}</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="glass-card panel-card">
+        <view class="section-head">
+          <view>
+            <view class="eyebrow">Step 1</view>
+            <view class="section-title">选择滑雪视频</view>
+            <view class="section-subtitle">
+              建议上传单人、视角稳定、能完整看到身体动作的训练片段。
+            </view>
+          </view>
+          <view class="status-pill {{selectedVideo.tempFilePath ? 'emerald' : 'sky'}}">
+            {{selectedVideo.tempFilePath ? '素材就绪' : '等待选择'}}
+          </view>
+        </view>
+
+        <view class="video-select" bindtap="chooseVideo">
+          <view class="video-select-ring"></view>
+          <view class="video-select-title">
+            {{selectedVideo.tempFilePath ? selectedVideo.name : '点击这里选择视频'}}
+          </view>
+          <view class="video-select-hint">
+            支持 MP4 / MOV / AVI，可从相册选择或直接拍摄。
+          </view>
+        </view>
+
+        <view class="video-meta-grid" wx:if="{{selectedVideo.tempFilePath}}">
+          <view class="video-meta-item">
+            <view class="video-meta-label">文件大小</view>
+            <view class="video-meta-value">{{selectedVideo.sizeLabel}}</view>
+          </view>
+          <view class="video-meta-item">
+            <view class="video-meta-label">视频时长</view>
+            <view class="video-meta-value">{{selectedVideo.durationLabel}}</view>
+          </view>
+          <view class="video-meta-item">
+            <view class="video-meta-label">视频分辨率</view>
+            <view class="video-meta-value">{{selectedVideo.resolutionLabel}}</view>
+          </view>
+        </view>
+
+        <view class="panel-actions">
+          <button class="secondary-button" bindtap="chooseVideo">重新选择</button>
+        </view>
+      </view>
+
+      <view class="glass-card panel-card">
+        <view class="section-head">
+          <view>
+            <view class="eyebrow">Step 2</view>
+            <view class="section-title">补充训练参数</view>
+            <view class="section-subtitle">
+              身高、体重和雪板长度为可选项，填得越完整，后端辅助分析会更充分。
+            </view>
+          </view>
+        </view>
+
+        <view class="field-grid">
+          <view class="field-cell">
+            <view class="field-label">身高 (cm)</view>
+            <input
+              class="field-input"
+              type="digit"
+              placeholder="例如 175"
+              placeholder-style="color: rgba(155,183,202,0.45);"
+              value="{{form.heightCm}}"
+              data-field="heightCm"
+              bindinput="onInput"
+            />
+          </view>
+
+          <view class="field-cell">
+            <view class="field-label">体重 (kg)</view>
+            <input
+              class="field-input"
+              type="digit"
+              placeholder="例如 70"
+              placeholder-style="color: rgba(155,183,202,0.45);"
+              value="{{form.weightKg}}"
+              data-field="weightKg"
+              bindinput="onInput"
+            />
+          </view>
+
+          <view class="field-cell">
+            <view class="field-label">雪板长度 (cm)</view>
+            <input
+              class="field-input"
+              type="digit"
+              placeholder="例如 165"
+              placeholder-style="color: rgba(155,183,202,0.45);"
+              value="{{form.boardLengthCm}}"
+              data-field="boardLengthCm"
+              bindinput="onInput"
+            />
+          </view>
+        </view>
+
+        <view class="field-label board-label">雪板类型</view>
+        <view class="segment-control">
+          <view
+            class="segment-item {{form.boardType === 'ski' ? 'active' : ''}}"
+            data-value="ski"
+            bindtap="selectBoardType"
+          >
+            双板 Ski
+          </view>
+          <view
+            class="segment-item {{form.boardType === 'snowboard' ? 'active' : ''}}"
+            data-value="snowboard"
+            bindtap="selectBoardType"
+          >
+            单板 Snowboard
+          </view>
+        </view>
+
+        <view class="switch-card">
+          <view>
+            <view class="switch-title">开启辅助分析</view>
+            <view class="soft-caption">
+              将结合你填写的身体参数一起返回更个性化的训练建议。
+            </view>
+          </view>
+          <switch
+            color="#53e0ff"
+            checked="{{form.assistEnabled}}"
+            bindchange="onAssistChange"
+          />
+        </view>
+      </view>
+
+      <view class="glass-card panel-card">
+        <view class="section-head">
+          <view>
+            <view class="eyebrow">Step 3</view>
+            <view class="section-title">开始生成报告</view>
+            <view class="section-subtitle">
+              上传完成后，系统会自动进入分析队列并生成可视化结果页。
+            </view>
+          </view>
+        </view>
+
+        <view class="upload-progress" wx:if="{{isUploading}}">
+          <view class="upload-progress-track">
+            <view class="upload-progress-fill" style="width: {{uploadProgress}}%;"></view>
+          </view>
+          <view class="upload-progress-text">{{uploadStatusText}}</view>
+        </view>
+
+        <button
+          class="primary-button {{canSubmit ? '' : 'disabled'}}"
+          disabled="{{!canSubmit || isUploading}}"
+          bindtap="startAnalysis"
+        >
+          {{isUploading ? '上传中...' : '开始 AI 分析'}}
+        </button>
+      </view>
+
+      <view class="glass-card panel-card">
+        <view class="section-head">
+          <view>
+            <view class="eyebrow">Flow</view>
+            <view class="section-title">分析流程</view>
+            <view class="section-subtitle">
+              这套小程序已经直接对接你当前的 Flask 后端接口。
+            </view>
+          </view>
+        </view>
+
+        <view class="flow-list">
+          <view class="flow-item" wx:for="{{flowSteps}}" wx:key="step">
+            <view class="flow-step">{{item.step}}</view>
+            <view class="flow-content">
+              <view class="flow-title">{{item.title}}</view>
+              <view class="flow-description">{{item.description}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+</view>

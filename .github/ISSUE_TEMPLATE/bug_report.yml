@@ -1,0 +1,31 @@
+name: 问题反馈
+description: 报告公开客户端、文档或示例中的可复现问题
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 请说明发生了什么以及期望结果。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 请提供最短复现步骤，不要粘贴密钥、个人信息或真实用户视频。
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 运行环境
+      placeholder: 例如 Windows 11、微信开发者工具版本、Node.js 版本
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: 安全确认
+      options:
+        - label: 我确认内容中不包含密钥、个人信息或未授权数据。
+          required: true

@@ -1,0 +1,21 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/report/index"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "backgroundColor": "#06111d",
+    "navigationBarBackgroundColor": "#06111d",
+    "navigationBarTitleText": "雪道智析",
+    "navigationBarTextStyle": "white"
+  },
+  "networkTimeout": {
+    "request": 30000,
+    "uploadFile": 600000,
+    "downloadFile": 600000
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json"
+}
